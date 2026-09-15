@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Farm — Centro de Comando Agro IoT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root {
+      --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+      --font-display: 'Space Grotesk', system-ui, sans-serif;
+
+      --bg-page: #060d0a;
+      --bg-card: rgba(14, 26, 22, 0.75);
+      --bg-card-hover: rgba(20, 36, 30, 0.85);
+      --border-card: rgba(45, 80, 65, 0.35);
+      --border-glow: rgba(16, 185, 129, 0.2);
+      
+      --text-main: #f0fdf4;
+      --text-muted: #86efac;
+      --text-sub: #64748b;
+      
+      --accent-green: #10b981;
+      --accent-green-bright: #34d399;
+      --accent-green-glow: rgba(16, 185, 129, 0.25);
+      --accent-blue: #0ea5e9;
+      --accent-blue-glow: rgba(14, 165, 233, 0.25);
+      --accent-amber: #f59e0b;
+      --accent-red: #f43f5e;
+      --accent-red-glow: rgba(244, 63, 94, 0.25);
+      
+      --accent-gradient-agro: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --accent-gradient-blue: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+
+      --table-header: rgba(10, 20, 16, 0.8);
+      --table-row-hover: rgba(16, 185, 129, 0.05);
+      --pico-bg: rgba(245, 158, 11, 0.12);
+      --pico-border: rgba(245, 158, 11, 0.3);
+      --warning-bg: rgba(245, 158, 11, 0.1);
+      --warning-text: #fbbf24;
+      --warning-border: rgba(245, 158, 11, 0.25);
+      --shadow-card: 0 16px 32px -8px rgba(0, 0, 0, 0.4), 0 0 1px rgba(16, 185, 129, 0.2);
+      
+      --radius-xl: 20px;
+      --radius-lg: 14px;
+      --radius-md: 10px;
+    }
+
+    [data-theme="light"] {
+      --bg-page: #f1f7f4;
+      --bg-card: rgba(255, 255, 255, 0.88);
+      --bg-card-hover: #ffffff;
+      --border-card: rgba(209, 231, 221, 0.9);
+      --border-glow: rgba(16, 185, 129, 0.15);
+      
+      --text-main: #0f291e;
+      --text-muted: #15803d;
+      --text-sub: #64748b;
+      
+      --accent-green: #059669;
+      --accent-green-bright: #10b981;
+      --accent-blue: #0284c7;
+      
+      --table-header: #e6f4ed;
+      --table-row-hover: #f0fdf4;
+      --pico-bg: rgba(245, 158, 11, 0.08);
+      --pico-border: rgba(245, 158, 11, 0.25);
+      --warning-bg: rgba(245, 158, 11, 0.12);
+      --warning-text: #b45309;
+      --warning-border: rgba(245, 158, 11, 0.3);
+      --shadow-card: 0 10px 25px -5px rgba(15, 23, 42, 0.05), 0 8px 10px -6px rgba(15, 23, 42, 0.03);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      min-height: 100vh;
+      transition: background-color 0.4s ease, color 0.4s ease;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(14, 165, 233, 0.06) 0%, transparent 40%),
+        linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+      background-attachment: fixed;
+    }
+
+    /* BARRA SUPERIOR / TOPBAR */
+    .topbar {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-card);
+      padding: 16px 32px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      transition: all 0.3s ease;
+    }
+
+    .topbar-wrapper {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--accent-gradient-agro);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      box-shadow: 0 4px 14px var(--accent-green-glow);
+    }
+
+    .topbar-brand h1 {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-tag {
+      font-size: 0.68rem;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-green-bright);
+      border: 1px solid var(--border-glow);
+      font-family: var(--font-body);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .subtitulo {
+      font-size: 0.82rem;
+      color: var(--text-sub);
+      margin-top: 2px;
+    }
+
+    .status-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--text-sub);
+      transition: all 0.3s ease;
+    }
+
+    .dot.ativo {
+      background: var(--accent-green);
+      box-shadow: 0 0 0 4px var(--accent-green-glow);
+      animation: pulse-green 2s infinite;
+    }
+
+    .dot.erro {
+      background: var(--accent-red);
+      box-shadow: 0 0 0 4px var(--accent-red-glow);
+    }
+
+    @keyframes pulse-green {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+      70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* CONTAINER PRINCIPAL */
+    .container {
+      max-width: 1280px;
+      margin: 28px auto;
+      padding: 0 24px 48px;
+    }
+
+    /* PAINEL DE CONTROLES PRINCIPAIS */
+    .controles {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-card);
+      padding: 14px 20px;
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-card);
+    }
+
+    .botao {
+      border: 1px solid var(--border-card);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-main);
+      padding: 10px 18px;
+      border-radius: var(--radius-md);
+      font-size: 0.88rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25 ease;
+    }
+
+    .botao:hover:not(:disabled) {
+      background: var(--table-row-hover);
+      border-color: var(--accent-green);
+      transform: translateY(-2px);
+    }
+
+    .botao:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .botao-primario {
+      background: var(--accent-gradient-agro);
+      border: none;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+    }
+
+    .botao-primario:hover:not(:disabled) {
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+      background: var(--accent-gradient-agro);
+    }
+
+    .botao-perigo {
+      color: var(--accent-red);
+      border-color: rgba(244, 63, 94, 0.3);
+    }
+
+    .botao-perigo:hover:not(:disabled) {
+      background: var(--accent-red-glow);
+      border-color: var(--accent-red);
+    }
+
+    .botao-ativo {
+      background: var(--accent-gradient-blue);
+      border: none;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35);
+    }
+
+    .intervalo {
+      margin-left: auto;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-sub);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .intervalo select {
+      padding: 8px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-card);
+      background: var(--bg-card);
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .intervalo select:focus {
+      border-color: var(--accent-green);
+    }
+
+    /* GRID DE CARDS TELEMÉTRICOS */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.3s ease;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: transparent;
+      transition: background 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: var(--border-glow);
+    }
+
+    .card-umidade::before { background: var(--accent-gradient-blue); }
+    .card-temp::before { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+    .card-bomba::before { background: var(--accent-gradient-agro); }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-label {
+      font-family: var(--font-display);
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-sub);
+    }
+
+    .card-icon-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .card-body {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .card-valor {
+      font-family: var(--font-display);
+      font-size: 2.75rem;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+
+    .card-tag-status {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-card);
+      color: var(--text-muted);
+    }
+
+    .barra {
+      height: 8px;
+      background: rgba(148, 163, 184, 0.15);
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .barra-preenchimento {
+      height: 100%;
+      width: 0%;
+      background: var(--accent-blue);
+      border-radius: 999px;
+      transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.4s ease;
+    }
+
+    .status-bomba {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 700;
+    }
+
+    .led {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent-red);
+      box-shadow: 0 0 0 4px var(--accent-red-glow);
+      transition: all 0.3s ease;
+    }
+
+    .led.ligada {
+      background: var(--accent-green);
+      box-shadow: 0 0 0 4px var(--accent-green-glow);
+      animation: pulse-green 1.5s infinite;
+    }
+
+    .card-hint {
+      font-size: 0.78rem;
+      color: var(--text-sub);
+      line-height: 1.4;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* PAINEL DE INSIGHTS AGRONÔMICOS E CONSUMO DE ÁGUA */
+    .agro-insights-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    @media (max-width: 900px) {
+      .agro-insights-grid { grid-template-columns: 1fr; }
+    }
+
+    .insight-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-xl);
+      padding: 20px 24px;
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .insight-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .insight-titulo {
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent-green-bright);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .insight-mensagem {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-main);
+      line-height: 1.5;
+      background: rgba(16, 185, 129, 0.06);
+      border: 1px dashed rgba(16, 185, 129, 0.25);
+      border-radius: var(--radius-lg);
+      padding: 12px 16px;
+    }
+
+    .consumo-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .stat-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      text-align: center;
+    }
+
+    .stat-box .num {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent-green-bright);
+    }
+
+    .stat-box .lbl {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    /* HARDWARE / TELEMETRIA */
+    .telemetria-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .telem-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.84rem;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .telem-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+    .telem-val {
+      font-family: var(--font-display);
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    /* SEÇÃO E GRID DE PICOS DA SESSÃO */
+    .secao-titulo {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .picos {
+      margin-bottom: 32px;
+    }
+
+    .picos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .pico {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      transition: all 0.25s ease;
+    }
+
+    .pico:hover {
+      border-color: var(--border-glow);
+    }
+
+    .pico-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .pico-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .pico-valor {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .pico-icon {
+      font-size: 1.5rem;
+      opacity: 0.8;
+    }
+
+    /* HISTÓRICO RECENTE & TABELA */
+    .historico {
+      margin-bottom: 32px;
+    }
+
+    .historico-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .historico-contador {
+      font-family: var(--font-body);
+      font-weight: 500;
+      color: var(--text-sub);
+      font-size: 0.85rem;
+    }
+
+    .tabela-wrapper {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      text-align: left;
+    }
+
+    thead th {
+      padding: 16px 24px;
+      background: var(--table-header);
+      border-bottom: 1px solid var(--border-card);
+      color: var(--text-sub);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    tbody td {
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border-card);
+      color: var(--text-main);
+      font-weight: 500;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+
+    tbody tr { transition: background-color 0.2s ease; }
+
+    tbody tr:hover:not(.linha-vazia) {
+      background-color: var(--table-row-hover);
+    }
+
+    .linha-vazia td {
+      color: var(--text-sub);
+      text-align: center;
+      padding: 36px 20px;
+    }
+
+    .linha-pico {
+      background: var(--pico-bg) !important;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .badge-on {
+      background: var(--accent-green-glow);
+      color: var(--accent-green-bright);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-off {
+      background: rgba(148, 163, 184, 0.12);
+      color: var(--text-sub);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    /* GRÁFICO TEMPORAL */
+    .grafico { margin-bottom: 32px; }
+
+    .grafico-wrapper {
+      position: relative;
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      height: 340px;
+      box-shadow: var(--shadow-card);
+    }
+
+    .grafico-aviso {
+      margin-top: 14px;
+      font-size: 0.84rem;
+      font-weight: 500;
+      color: var(--warning-text);
+      background: var(--warning-bg);
+      border: 1px solid var(--warning-border);
+      border-radius: var(--radius-md);
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* RODAPÉ */
+    .rodape {
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--text-sub);
+      padding: 28px;
+      border-top: 1px solid var(--border-card);
+      margin-top: 20px;
+    }
+
+    @media (max-width: 640px) {
+      .topbar { padding: 14px 16px; }
+      .container { padding: 0 14px 32px; }
+      .intervalo { margin-left: 0; width: 100%; justify-content: space-between; }
+      .controles { gap: 8px; }
+      .botao { flex: 1; justify-content: center; font-size: 0.82rem; }
+      .consumo-stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BARRA SUPERIOR -->
+  <header class="topbar">
+    <div class="topbar-wrapper">
+      <div class="topbar-brand">
+        <div class="brand-icon">🌱</div>
+        <div>
+          <h1>Smart Farm <span class="brand-tag">IoT V2.4</span></h1>
+          <p class="subtitulo" id="texto-modo">Modo simulado — dados gerados localmente</p>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div class="status-indicator">
+          <span class="dot" id="conexao-dot"></span>
+        </div>
+        <button id="btn-tema" class="botao">🌙 Tema Escuro</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- CONTROLES DO PAINEL -->
+    <section class="controles">
+      <button id="btn-iniciar" class="botao botao-primario">▶ Iniciar Leitura</button>
+      <button id="btn-parar" class="botao" disabled>⏸ Pausar</button>
+      <button id="btn-reset" class="botao botao-perigo">🗑 Limpar Dados</button>
+      <button id="btn-modo" class="botao">🔌 Firebase Real</button>
+
+      <label class="intervalo">
+        Frequência:
+        <select id="select-intervalo">
+          <option value="1000">1 segundo</option>
+          <option value="2000" selected>2 segundos</option>
+          <option value="5000">5 segundos</option>
+        </select>
+      </label>
+    </section>
+
+    <!-- CARDS PRINCIPAIS -->
+    <section class="cards">
+      <div class="card card-umidade">
+        <div class="card-header">
+          <span class="card-label">Umidade do Solo</span>
+          <div class="card-icon-badge">💧</div>
+        </div>
+        <div class="card-body">
+          <span class="card-valor" id="valor-umidade">--%</span>
+          <span class="card-tag-status" id="tag-umidade-status">Aguardando...</span>
+        </div>
+        <div class="barra">
+          <div class="barra-preenchimento" id="barra-umidade"></div>
+        </div>
+      </div>
+
+      <div class="card card-temp">
+        <div class="card-header">
+          <span class="card-label">Temperatura do Ar</span>
+          <div class="card-icon-badge">🌡️</div>
+        </div>
+        <div class="card-body">
+          <span class="card-valor" id="valor-temperatura">--°C</span>
+          <span class="card-tag-status" id="tag-temp-status">--</span>
+        </div>
+        <div class="barra">
+          <div class="barra-preenchimento" id="barra-temperatura"></div>
+        </div>
+      </div>
+
+      <div class="card card-bomba">
+        <div class="card-header">
+          <span class="card-label">Status da Bomba</span>
+          <div class="card-icon-badge">⚡</div>
+        </div>
+        <div class="status-bomba" id="status-bomba">
+          <span class="led" id="led-bomba"></span>
+          <span id="texto-bomba">DESLIGADA</span>
+        </div>
+        <span class="card-hint">
+          ⚙️ Liga abaixo de 20% • Desliga a partir de 20%
+        </span>
+      </div>
+    </section>
+
+    <!-- NOVAS FUNCIONALIDADES ÚTEIS: INSIGHT AGRONÔMICO + MEDIDOR DE ÁGUA -->
+    <section class="agro-insights-grid">
+      <div class="insight-card">
+        <div class="insight-header">
+          <span class="insight-titulo">💡 Diagnóstico Agronômico Instantâneo</span>
+          <span style="font-size: 0.75rem; color: var(--text-sub);">Cultura: Horta / Grãos</span>
+        </div>
+        <p class="insight-mensagem" id="mensagem-agronomica">
+          Inicie o monitoramento para gerar recomendações em tempo real com base no solo e no clima.
+        </p>
+
+        <div class="consumo-stats">
+          <div class="stat-box">
+            <div class="num" id="stat-tempo-bomba">00:00</div>
+            <div class="lbl">Tempo Bomba Ativa</div>
+          </div>
+          <div class="stat-box">
+            <div class="num" id="stat-ciclos-bomba">0</div>
+            <div class="lbl">Ciclos de Irrigação</div>
+          </div>
+          <div class="stat-box">
+            <div class="num" id="stat-litros-agua">0.0 L</div>
+            <div class="lbl">Consumo de Água Est.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-card telemetria-card">
+        <div class="insight-header">
+          <span class="insight-titulo" style="color: var(--accent-blue);">📡 Telemetria ESP32</span>
+        </div>
+        <div class="telem-item">
+          <span>Sinal Wi-Fi (RSSI):</span>
+          <span class="telem-val" style="color: var(--accent-green-bright);">-64 dBm (Ótimo)</span>
+        </div>
+        <div class="telem-item">
+          <span>Alimentação:</span>
+          <span class="telem-val">LiFePO4 Solar (100%)</span>
+        </div>
+        <div class="telem-item">
+          <span>Latência do Cloud:</span>
+          <span class="telem-val" id="telem-ping">18 ms</span>
+        </div>
+        <div class="telem-item">
+          <span>Protocolo:</span>
+          <span class="telem-val" id="telem-protocolo">Simulação Local</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- PICOS DA SESSÃO -->
+    <section class="picos">
+      <h2 class="secao-titulo">
+        <span>📈 Picos Extremos da Sessão</span>
+      </h2>
+      <div class="picos-grid">
+        <div class="pico">
+          <div class="pico-info">
+            <span class="pico-label">Maior umidade</span>
+            <span class="pico-valor" id="pico-umidade-max">--</span>
+          </div>
+          <span class="pico-icon">💧</span>
+        </div>
+        <div class="pico">
+          <div class="pico-info">
+            <span class="pico-label">Menor umidade</span>
+            <span class="pico-valor" id="pico-umidade-min">--</span>
+          </div>
+          <span class="pico-icon">🌵</span>
+        </div>
+        <div class="pico">
+          <div class="pico-info">
+            <span class="pico-label">Maior temperatura</span>
+            <span class="pico-valor" id="pico-temp-max">--</span>
+          </div>
+          <span class="pico-icon">🔥</span>
+        </div>
+        <div class="pico">
+          <div class="pico-info">
+            <span class="pico-label">Menor temperatura</span>
+            <span class="pico-valor" id="pico-temp-min">--</span>
+          </div>
+          <span class="pico-icon">❄️</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- HISTÓRICO RECENTE -->
+    <section class="historico">
+      <div class="secao-titulo">
+        <span>📋 Histórico Recente <span class="historico-contador" id="historico-contador">(0 leituras)</span></span>
+        <div class="historico-header-actions">
+          <button id="btn-exportar-csv" class="botao" style="font-size: 0.78rem; padding: 6px 12px;">📥 Exportar CSV</button>
+        </div>
+      </div>
+
+      <div class="tabela-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Horário</th>
+              <th>Umidade</th>
+              <th>Temperatura</th>
+              <th>Status da Bomba</th>
+            </tr>
+          </thead>
+          <tbody id="corpo-tabela">
+            <tr class="linha-vazia">
+              <td colspan="4">Nenhuma leitura registrada. Clique em "Iniciar Leitura".</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- GRÁFICO TEMPORAL -->
+    <section class="grafico">
+      <h2 class="secao-titulo">📉 Variação Temporal de Sensores</h2>
+      <div class="grafico-wrapper">
+        <canvas id="grafico-leituras"></canvas>
+      </div>
+      <p class="grafico-aviso" id="aviso-temperatura" hidden>
+        ⚠️ O hardware ESP32 atual transmite apenas dados de umidade ao Firebase. A temperatura só é exibida no modo simulado.
+      </p>
+    </section>
+
+  </main>
+
+  <!-- RODAPÉ -->
+  <footer class="rodape">
+    <span id="texto-rodape">Painel de controle IoT — dados gerados localmente para validação e testes de interface.</span>
+  </footer>
+
+  <script>
+    const LIMITE_HISTORICO = 8;
+    const LIMITE_GRAFICO = 15;
+    const LIMIAR_LIGA = 20;
+    const LIMIAR_DESLIGA = 20;
+
+    const FAIXA_UMIDADE = { min: 10, max: 90 };
+    const FAIXA_TEMPERATURA = { min: 15, max: 38 };
+
+    const FIREBASE_URL = 'https://smart-farm-d6948-default-rtdb.firebaseio.com/leituras.json';
+
+    const estado = {
+      modo: 'simulado',
+      rodando: false,
+      timerId: null,
+      segundosBombaAtiva: 0,
+      ciclosBomba: 0,
+      bombaEstavaLigadaAnterior: false,
+      bombaLigada: false,
+      ultimaUmidade: 55,
+      ultimaTemperatura: 24,
+      ultimaChaveFirebase: null,
+      historico: [],
+      picos: {
+        umidadeMax: null,
+        umidadeMin: null,
+        temperaturaMax: null,
+        temperaturaMin: null,
+      },
+    };
+
+    const el = {
+      dot: document.getElementById('conexao-dot'),
+      textoModo: document.getElementById('texto-modo'),
+      textoRodape: document.getElementById('texto-rodape'),
+      avisoTemperatura: document.getElementById('aviso-temperatura'),
+      valorUmidade: document.getElementById('valor-umidade'),
+      valorTemperatura: document.getElementById('valor-temperatura'),
+      barraUmidade: document.getElementById('barra-umidade'),
+      barraTemperatura: document.getElementById('barra-temperatura'),
+      led: document.getElementById('led-bomba'),
+      textoBomba: document.getElementById('texto-bomba'),
+      btnIniciar: document.getElementById('btn-iniciar'),
+      btnParar: document.getElementById('btn-parar'),
+      btnReset: document.getElementById('btn-reset'),
+      btnModo: document.getElementById('btn-modo'),
+      btnTema: document.getElementById('btn-tema'),
+      selectIntervalo: document.getElementById('select-intervalo'),
+      picoUmidadeMax: document.getElementById('pico-umidade-max'),
+      picoUmidadeMin: document.getElementById('pico-umidade-min'),
+      picoTempMax: document.getElementById('pico-temp-max'),
+      picoTempMin: document.getElementById('pico-temp-min'),
+      corpoTabela: document.getElementById('corpo-tabela'),
+      historicoContador: document.getElementById('historico-contador'),
+      canvasGrafico: document.getElementById('grafico-leituras'),
+      
+      // Novos elementos visuais
+      tagUmidadeStatus: document.getElementById('tag-umidade-status'),
+      tagTempStatus: document.getElementById('tag-temp-status'),
+      mensagemAgronomica: document.getElementById('mensagem-agronomica'),
+      statTempoBomba: document.getElementById('stat-tempo-bomba'),
+      statCiclosBomba: document.getElementById('stat-ciclos-bomba'),
+      statLitrosAgua: document.getElementById('stat-litros-agua'),
+      telemProtocolo: document.getElementById('telem-protocolo'),
+      telemPing: document.getElementById('telem-ping'),
+      btnExportarCsv: document.getElementById('btn-exportar-csv'),
+    };
+
+    function proximoValor(valorAtual, faixa, variacaoMax) {
+      const variacao = (Math.random() * 2 - 1) * variacaoMax;
+      let novo = valorAtual + variacao;
+      novo = Math.max(faixa.min, Math.min(faixa.max, novo));
+      return Math.round(novo * 10) / 10;
+    }
+
+    function gerarLeituraSimulada() {
+      const umidade = proximoValor(estado.ultimaUmidade, FAIXA_UMIDADE, 8);
+      const temperatura = proximoValor(estado.ultimaTemperatura, FAIXA_TEMPERATURA, 1.5);
+
+      estado.ultimaUmidade = umidade;
+      estado.ultimaTemperatura = temperatura;
+
+      return { umidade, temperatura, bombaAcionada: null };
+    }
+
+    async function buscarLeituraFirebase() {
+      const tInicio = performance.now();
+      const url = `${FIREBASE_URL}?orderBy="$key"&limitToLast=1`;
+      const resposta = await fetch(url);
+
+      if (!resposta.ok) {
+        throw new Error(`Status HTTP: ${resposta.status}`);
+      }
+
+      const tFim = performance.now();
+      el.telemPing.textContent = `${Math.round(tFim - tInicio)} ms`;
+
+      const dados = await resposta.json();
+      if (!dados) return null;
+
+      const chaves = Object.keys(dados);
+      const chave = chaves[0];
+
+      if (chave === estado.ultimaChaveFirebase) {
+        return null;
+      }
+      estado.ultimaChaveFirebase = chave;
+
+      const bruto = dados[chave];
+      return {
+        umidade: typeof bruto.umidade === 'number' ? bruto.umidade : null,
+        temperatura: typeof bruto.temperatura === 'number' ? bruto.temperatura : null,
+        bombaAcionada: typeof bruto.bomba_acionada === 'boolean' ? bruto.bomba_acionada : null,
+      };
+    }
+
+    function resolverStatusBomba(leitura) {
+      if (estado.modo === 'real' && leitura.bombaAcionada !== null) {
+        estado.bombaLigada = leitura.bombaAcionada;
+      } else {
+        if (leitura.umidade < LIMIAR_LIGA) {
+          estado.bombaLigada = true;
+        } else if (leitura.umidade >= LIMIAR_DESLIGA) {
+          estado.bombaLigada = false;
+        }
+      }
+
+      // Atualiza estátisticas de ciclos e consumo de água
+      if (estado.bombaLigada && !estado.bombaEstavaLigadaAnterior) {
+        estado.ciclosBomba++;
+      }
+      estado.bombaEstavaLigadaAnterior = estado.bombaLigada;
+
+      return estado.bombaLigada;
+    }
+
+    function atualizarPicos(leitura) {
+      const p = estado.picos;
+      if (leitura.umidade !== null) {
+        if (p.umidadeMax === null || leitura.umidade > p.umidadeMax) p.umidadeMax = leitura.umidade;
+        if (p.umidadeMin === null || leitura.umidade < p.umidadeMin) p.umidadeMin = leitura.umidade;
+      }
+      if (leitura.temperatura !== null) {
+        if (p.temperaturaMax === null || leitura.temperatura > p.temperaturaMax) p.temperaturaMax = leitura.temperatura;
+        if (p.temperaturaMin === null || leitura.temperatura < p.temperaturaMin) p.temperaturaMin = leitura.temperatura;
+      }
+    }
+
+    function renderizarPicos() {
+      const p = estado.picos;
+      el.picoUmidadeMax.textContent = p.umidadeMax !== null ? `${p.umidadeMax}%` : '--';
+      el.picoUmidadeMin.textContent = p.umidadeMin !== null ? `${p.umidadeMin}%` : '--';
+      el.picoTempMax.textContent = p.temperaturaMax !== null ? `${p.temperaturaMax}°C` : '--';
+      el.picoTempMin.textContent = p.temperaturaMin !== null ? `${p.temperaturaMin}°C` : '--';
+    }
+
+    function atualizarDiagnosticoAgronomico(umidade, temperatura, bombaLigada) {
+      let statusU = "Normal";
+      let statusT = "Ameno";
+
+      if (umidade !== null) {
+        if (umidade < 20) statusU = "Crítico (Seco)";
+        else if (umidade < 40) statusU = "Moderado";
+        else if (umidade < 70) statusU = "Ótimo (Ideal)";
+        else statusU = "Encharcado";
+        el.tagUmidadeStatus.textContent = statusU;
+      }
+
+      if (temperatura !== null) {
+        if (temperatura > 32) statusT = "Calor Extremo";
+        else if (temperatura > 25) statusT = "Quente";
+        else if (temperatura > 18) statusT = "Ideal";
+        else statusT = "Frio";
+        el.tagTempStatus.textContent = statusT;
+      }
+
+      if (umidade !== null) {
+        if (bombaLigada) {
+          el.mensagemAgronomica.innerHTML = `⚠️ <b>Solo ressecado (${umidade}%):</b> Bomba ativada automaticamente. Irrigando raiz para recuperar nível ótimo.`;
+        } else if (umidade >= 70) {
+          el.mensagemAgronomica.innerHTML = `🌧️ <b>Solo bem hidratado (${umidade}%):</b> Irrigação suspensa. Risco de proliferação fúngica se a temperatura elevar.`;
+        } else {
+          el.mensagemAgronomica.innerHTML = `✅ <b>Condição Agronômica Estável (${umidade}%):</b> Umidade em nível seguro para absorção de nutrientes.`;
+        }
+      }
+    }
+
+    function renderizarCards(leitura, bombaLigada) {
+      el.valorUmidade.textContent = leitura.umidade !== null ? `${leitura.umidade}%` : '--%';
+      el.valorTemperatura.textContent = leitura.temperatura !== null ? `${leitura.temperatura}°C` : '--°C';
+
+      el.barraUmidade.style.width = leitura.umidade !== null ? `${leitura.umidade}%` : '0%';
+      const pctTemp = leitura.temperatura !== null
+        ? Math.max(0, Math.min(100, (leitura.temperatura / 45) * 100))
+        : 0;
+      el.barraTemperatura.style.width = `${pctTemp}%`;
+
+      el.barraUmidade.style.backgroundColor =
+        leitura.umidade !== null && leitura.umidade < LIMIAR_LIGA ? 'var(--accent-red)' : 'var(--accent-blue)';
+
+      el.led.classList.toggle('ligada', bombaLigada);
+      el.textoBomba.textContent = bombaLigada ? 'LIGADA' : 'DESLIGADA';
+
+      atualizarDiagnosticoAgronomico(leitura.umidade, leitura.temperatura, bombaLigada);
+    }
+
+    function formatarHorario(data) {
+      return data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function registrarHistorico(leitura, bombaLigada) {
+      const item = {
+        horario: formatarHorario(new Date()),
+        umidade: leitura.umidade,
+        temperatura: leitura.temperatura,
+        bombaLigada,
+        ehPico:
+          (leitura.umidade !== null &&
+            (leitura.umidade === estado.picos.umidadeMax || leitura.umidade === estado.picos.umidadeMin)) ||
+          (leitura.temperatura !== null &&
+            (leitura.temperatura === estado.picos.temperaturaMax || leitura.temperatura === estado.picos.temperaturaMin)),
+      };
+
+      estado.historico.unshift(item);
+      if (estado.historico.length > LIMITE_HISTORICO) {
+        estado.historico.pop();
+      }
+
+      atualizarGrafico(item);
+    }
+
+    function renderizarHistorico() {
+      el.historicoContador.textContent = `(${estado.historico.length} leitura${estado.historico.length === 1 ? '' : 's'})`;
+
+      if (estado.historico.length === 0) {
+        el.corpoTabela.innerHTML = `
+          <tr class="linha-vazia">
+            <td colspan="4">Nenhuma leitura registrada. Clique em "Iniciar Leitura".</td>
+          </tr>`;
+        return;
+      }
+
+      el.corpoTabela.innerHTML = estado.historico
+        .map(
+          (item) => `
+          <tr class="${item.ehPico ? 'linha-pico' : ''}">
+            <td style="font-family: var(--font-display); font-weight: 600;">${item.horario}</td>
+            <td><b>${item.umidade !== null ? item.umidade + '%' : '--'}</b></td>
+            <td>${item.temperatura !== null ? item.temperatura + '°C' : '--'}</td>
+            <td>
+              <span class="badge ${item.bombaLigada ? 'badge-on' : 'badge-off'}">
+                ${item.bombaLigada ? '💧 LIGADA' : '⭕ DESLIGADA'}
+              </span>
+            </td>
+          </tr>`
+        )
+        .join('');
+    }
+
+    let grafico = null;
+
+    function criarGrafico() {
+      if (typeof Chart === 'undefined') return;
+
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const textColor = isDark ? '#86efac' : '#15803d';
+      const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
+
+      grafico = new Chart(el.canvasGrafico, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: 'Umidade do Solo (%)',
+              data: [],
+              borderColor: '#0ea5e9',
+              backgroundColor: 'rgba(14, 165, 233, 0.15)',
+              fill: true,
+              yAxisID: 'yUmidade',
+              tension: 0.35,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+            },
+            {
+              label: 'Temperatura (°C)',
+              data: [],
+              borderColor: '#f43f5e',
+              backgroundColor: 'rgba(244, 63, 94, 0.15)',
+              fill: true,
+              yAxisID: 'yTemperatura',
+              tension: 0.35,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              spanGaps: true,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 250 },
+          interaction: { mode: 'index', intersect: false },
+          scales: {
+            x: {
+              ticks: { color: textColor, font: { family: 'Plus Jakarta Sans' } },
+              grid: { color: gridColor },
+            },
+            yUmidade: {
+              type: 'linear',
+              position: 'left',
+              min: 0,
+              max: 100,
+              ticks: { color: textColor, font: { family: 'Plus Jakarta Sans' } },
+              grid: { color: gridColor },
+              title: { display: true, text: 'Umidade (%)', color: textColor, font: { family: 'Plus Jakarta Sans', weight: '700' } },
+            },
+            yTemperatura: {
+              type: 'linear',
+              position: 'right',
+              min: 0,
+              max: 45,
+              ticks: { color: textColor, font: { family: 'Plus Jakarta Sans' } },
+              grid: { drawOnChartArea: false },
+              title: { display: true, text: 'Temperatura (°C)', color: textColor, font: { family: 'Plus Jakarta Sans', weight: '700' } },
+            },
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { color: textColor, usePointStyle: true, font: { family: 'Plus Jakarta Sans', weight: '600' } }
+            },
+          },
+        },
+      });
+    }
+
+    function atualizarCoresGrafico() {
+      if (!grafico) return;
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const textColor = isDark ? '#86efac' : '#15803d';
+      const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
+
+      if (grafico.options.scales.x) {
+        grafico.options.scales.x.ticks.color = textColor;
+        grafico.options.scales.x.grid.color = gridColor;
+      }
+      if (grafico.options.scales.yUmidade) {
+        grafico.options.scales.yUmidade.ticks.color = textColor;
+        grafico.options.scales.yUmidade.title.color = textColor;
+        grafico.options.scales.yUmidade.grid.color = gridColor;
+      }
+      if (grafico.options.scales.yTemperatura) {
+        grafico.options.scales.yTemperatura.ticks.color = textColor;
+        grafico.options.scales.yTemperatura.title.color = textColor;
+      }
+      if (grafico.options.plugins && grafico.options.plugins.legend) {
+        grafico.options.plugins.legend.labels.color = textColor;
+      }
+      grafico.update();
+    }
+
+    function atualizarGrafico(item) {
+      if (!grafico) return;
+
+      grafico.data.labels.push(item.horario);
+      grafico.data.datasets[0].data.push(item.umidade);
+      grafico.data.datasets[1].data.push(item.temperatura);
+
+      if (grafico.data.labels.length > LIMITE_GRAFICO) {
+        grafico.data.labels.shift();
+        grafico.data.datasets[0].data.shift();
+        grafico.data.datasets[1].data.shift();
+      }
+
+      grafico.data.datasets[1].hidden = estado.modo === 'real';
+      grafico.update();
+    }
+
+    function limparGrafico() {
+      if (!grafico) return;
+      grafico.data.labels = [];
+      grafico.data.datasets[0].data = [];
+      grafico.data.datasets[1].data = [];
+      grafico.update();
+    }
+
+    function atualizarMedidoresAgua() {
+      const segsIntervalo = Number(el.selectIntervalo.value) / 1000;
+      
+      if (estado.bombaLigada) {
+        estado.segundosBombaAtiva += segsIntervalo;
+      }
+
+      const mins = Math.floor(estado.segundosBombaAtiva / 60);
+      const segs = Math.floor(estado.segundosBombaAtiva % 60);
+      el.statTempoBomba.textContent = `${String(mins).padStart(2, '0')}:${String(segs).padStart(2, '0')}`;
+      el.statCiclosBomba.textContent = estado.ciclosBomba;
+
+      // Vazão estimada da micro-bomba: ~0.05 litros/segundo
+      const litros = (estado.segundosBombaAtiva * 0.05).toFixed(1);
+      el.statLitrosAgua.textContent = `${litros} L`;
+    }
+
+    async function executarCicloDeLeitura() {
+      let leitura;
+
+      if (estado.modo === 'real') {
+        try {
+          leitura = await buscarLeituraFirebase();
+          if (!leitura) return;
+          el.dot.classList.remove('erro');
+        } catch (erro) {
+          el.dot.classList.add('erro');
+          return;
+        }
+      } else {
+        leitura = gerarLeituraSimulada();
+      }
+
+      const bombaLigada = resolverStatusBomba(leitura);
+
+      atualizarPicos(leitura);
+      registrarHistorico(leitura, bombaLigada);
+
+      renderizarCards(leitura, bombaLigada);
+      renderizarPicos();
+      renderizarHistorico();
+      atualizarMedidoresAgua();
+    }
+
+    function iniciarSimulacao() {
+      if (estado.rodando) return;
+
+      estado.rodando = true;
+      el.dot.classList.add('ativo');
+      el.btnIniciar.disabled = true;
+      el.btnParar.disabled = false;
+      el.selectIntervalo.disabled = true;
+      el.btnModo.disabled = true;
+
+      executarCicloDeLeitura();
+      const intervalo = Number(el.selectIntervalo.value);
+      estado.timerId = setInterval(executarCicloDeLeitura, intervalo);
+    }
+
+    function pausarSimulacao() {
+      if (!estado.rodando) return;
+
+      estado.rodando = false;
+      clearInterval(estado.timerId);
+      estado.timerId = null;
+
+      el.dot.classList.remove('ativo');
+      el.btnIniciar.disabled = false;
+      el.btnParar.disabled = true;
+      el.selectIntervalo.disabled = false;
+      el.btnModo.disabled = false;
+    }
+
+    function resetarHistorico() {
+      estado.historico = [];
+      estado.picos = { umidadeMax: null, umidadeMin: null, temperaturaMax: null, temperaturaMin: null };
+      estado.segundosBombaAtiva = 0;
+      estado.ciclosBomba = 0;
+      
+      el.statTempoBomba.textContent = "00:00";
+      el.statCiclosBomba.textContent = "0";
+      el.statLitrosAgua.textContent = "0.0 L";
+
+      renderizarHistorico();
+      renderizarPicos();
+      limparGrafico();
+    }
+
+    function alternarModo() {
+      const estavaRodando = estado.rodando;
+      if (estavaRodando) pausarSimulacao();
+
+      estado.modo = estado.modo === 'simulado' ? 'real' : 'simulado';
+      estado.ultimaChaveFirebase = null;
+      resetarHistorico();
+
+      if (estado.modo === 'real') {
+        el.btnModo.textContent = '🖥 Modo Simulado';
+        el.btnModo.classList.add('botao-ativo');
+        el.textoModo.textContent = 'Modo real — lendo dados direto do Firebase';
+        el.telemProtocolo.textContent = 'Firebase RTDB';
+        el.textoRodape.textContent = `Conectado ao Realtime Database: ${FIREBASE_URL.replace('/leituras.json', '')}`;
+        el.avisoTemperatura.hidden = false;
+      } else {
+        el.btnModo.textContent = '🔌 Firebase Real';
+        el.btnModo.classList.remove('botao-ativo');
+        el.textoModo.textContent = 'Modo simulado — dados gerados localmente';
+        el.telemProtocolo.textContent = 'Simulação Local';
+        el.textoRodape.textContent = 'Painel de controle IoT — dados gerados localmente para validação e testes de interface.';
+        el.avisoTemperatura.hidden = true;
+      }
+
+      if (estavaRodando) iniciarSimulacao();
+    }
+
+    function alternarTema() {
+      const temaAtual = document.documentElement.getAttribute('data-theme');
+      const novoTema = temaAtual === 'dark' ? 'light' : 'dark';
+      
+      document.documentElement.setAttribute('data-theme', novoTema);
+      localStorage.setItem('tema', novoTema);
+      
+      el.btnTema.textContent = novoTema === 'dark' ? '☀️ Tema Claro' : '🌙 Tema Escuro';
+      atualizarCoresGrafico();
+    }
+
+    function exportarCSV() {
+      if (estado.historico.length === 0) {
+        alert("Não há dados registrados para exportar.");
+        return;
+      }
+
+      let csv = "Horario,Umidade(%),Temperatura(C),Status_Bomba\n";
+      estado.historico.forEach(row => {
+        csv += `${row.horario},${row.umidade ?? ''},${row.temperatura ?? ''},${row.bombaLigada ? 'LIGADA' : 'DESLIGADA'}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `smart_farm_telemetria_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // EVENT LISTENERS
+    el.btnIniciar.addEventListener('click', iniciarSimulacao);
+    el.btnParar.addEventListener('click', pausarSimulacao);
+    el.btnReset.addEventListener('click', resetarHistorico);
+    el.btnModo.addEventListener('click', alternarModo);
+    el.btnTema.addEventListener('click', alternarTema);
+    el.btnExportarCsv.addEventListener('click', exportarCSV);
+
+    el.selectIntervalo.addEventListener('change', () => {
+      if (estado.rodando) {
+        clearInterval(estado.timerId);
+        estado.timerId = setInterval(executarCicloDeLeitura, Number(el.selectIntervalo.value));
+      }
+    });
+
+    const temaSalvo = localStorage.getItem('tema') || 'dark';
+    document.documentElement.setAttribute('data-theme', temaSalvo);
+    el.btnTema.textContent = temaSalvo === 'dark' ? '☀️ Tema Claro' : '🌙 Tema Escuro';
+
+    criarGrafico();
+    renderizarHistorico();
+    renderizarPicos();
+  </script>
+
+</body>
+</html>
